@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from "react-
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Search, MapPin, Clock3, RefreshCw, X, CircleCheck, CircleX, Crosshair } from "lucide-react";
+import { FaPlay, FaArrowRight, FaArrowLeft, FaTrain, FaRegClock, FaMapMarkedAlt, FaLocationArrow, FaSignOutAlt } from "react-icons/fa";
 import metro_logo from "./assets/metro_logo.png";
 const DWELL = 25;
 const TERM_DWELL = 20;
@@ -614,7 +615,44 @@ function TrainPanel({ train, currentSec, follow, onFollow, onClose }) {
   );
 }
 
-export default function App() {
+/* ---------- Animatsiya yordamchilari ---------- */
+
+// Ekran ochilganda "shown" true bo'ladi (kirish animatsiyasi),
+// go() chaqirilganda "exit" o'rnatiladi (chiqish animatsiyasi) va delay'dan keyin callback ishlaydi.
+function useScreen() {
+  const [shown, setShown] = useState(false);
+  const [exit, setExit] = useState(null); // null | "next" | "back"
+
+  useEffect(() => {
+    const id = setTimeout(() => setShown(true), 40);
+    return () => clearTimeout(id);
+  }, []);
+
+  const go = (kind, callback, delay = 500) => {
+    if (exit) return;
+    setExit(kind);
+    setTimeout(callback, delay);
+  };
+
+  return { on: shown && !exit, exit, go };
+}
+
+const screenAnim = (on, exit) =>
+  `transition-all duration-500 ease-out ${exit === "next"
+    ? "scale-110 opacity-0 blur-sm"
+    : exit === "back"
+      ? "translate-x-10 opacity-0"
+      : on
+        ? "translate-y-0 scale-100 opacity-100"
+        : "translate-y-6 scale-95 opacity-0"
+  }`;
+
+const itemCls = (on) =>
+  `transition-all duration-500 ease-out ${on ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"}`;
+const itemStyle = (on, i) => ({ transitionDelay: on ? `${150 + i * 90}ms` : "0ms" });
+
+function MetroApp({ onExit }) {
+  const { on, exit, go } = useScreen();
   const [stations, setStations] = useState([]);
   const [selected, setSelected] = useState(null);
   const [selectedTrain, setSelectedTrain] = useState(null);
@@ -707,7 +745,7 @@ export default function App() {
   const routeLines = routes.filter((r) => activeLine === "all" || activeLine === r.line.id);
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+    <div className={`min-h-screen bg-[var(--bg)] text-[var(--text)] ${screenAnim(on, exit)}`}>
       <header className="relative z-50 flex flex-col gap-2 border-b border-[var(--border)] bg-[var(--panel)] px-3 py-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:px-4 sm:py-1.5 md:px-7">
         <div className="flex w-full min-w-0 items-center justify-between gap-3 sm:w-auto lg:flex-1">
           <div className="flex min-w-0 items-center">
@@ -741,7 +779,7 @@ export default function App() {
 
         <div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:shrink-0 sm:gap-3">
           <div className="dropdown">
-            <div tabIndex={0} role="button" className="btn m-2">
+            <div tabIndex={0} role="button" className="btn m-2 rounded-2xl">
               Theme
               <svg
                 width="12px"
@@ -752,12 +790,12 @@ export default function App() {
                 <path d="M1799 349l242 241-1017 1017L7 590l242-241 775 775 775-775z"></path>
               </svg>
             </div>
-            <ul tabIndex={-1} className="dropdown-content z-50 bg-base-300 rounded-box w-52 p-2 shadow-2xl">
+            <ul tabIndex={-1} className="dropdown-content z-50 bg-base-300 rounded-2xl w-52 p-2 shadow-2xl">
               <li>
                 <input
                   type="radio"
                   name="theme-dropdown"
-                  className="theme-controller w-full btn btn-sm btn-block btn-ghost justify-start"
+                  className="theme-controller w-full btn btn-sm rounded-2xl btn-block btn-ghost justify-start"
                   aria-label="Dark"
                   value="dark" />
               </li>
@@ -765,7 +803,7 @@ export default function App() {
                 <input
                   type="radio"
                   name="theme-dropdown"
-                  className="theme-controller w-full btn btn-sm btn-block btn-ghost justify-start"
+                  className="theme-controller w-full btn btn-sm rounded-2xl btn-block btn-ghost justify-start"
                   aria-label="Valentine"
                   value="valentine" />
               </li>
@@ -773,7 +811,7 @@ export default function App() {
                 <input
                   type="radio"
                   name="theme-dropdown"
-                  className="theme-controller w-full btn btn-sm btn-block btn-ghost justify-start"
+                  className="theme-controller w-full btn btn-sm rounded-2xl btn-block btn-ghost justify-start"
                   aria-label="Synthwave"
                   value="synthwave" />
               </li>
@@ -781,7 +819,7 @@ export default function App() {
                 <input
                   type="radio"
                   name="theme-dropdown"
-                  className="theme-controller w-full btn btn-sm btn-block btn-ghost justify-start"
+                  className="theme-controller w-full btn btn-sm rounded-2xl btn-block btn-ghost justify-start"
                   aria-label="Winter"
                   value="winter" />
               </li>
@@ -789,7 +827,7 @@ export default function App() {
                 <input
                   type="radio"
                   name="theme-dropdown"
-                  className="theme-controller w-full btn btn-sm btn-block btn-ghost justify-start"
+                  className="theme-controller w-full btn btn-sm rounded-2xl btn-block btn-ghost justify-start"
                   aria-label="Aqua"
                   value="aqua" />
               </li>
@@ -804,6 +842,15 @@ export default function App() {
           >
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
             Yangilash
+          </button>
+
+          <button
+            onClick={() => go("back", onExit)}
+            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm hover:bg-[var(--soft)] sm:flex-none"
+            aria-label="Chiqish"
+          >
+            <FaSignOutAlt size={14} />
+            Chiqish
           </button>
         </div>
       </header>
@@ -1003,4 +1050,158 @@ export default function App() {
       </footer>
     </div>
   );
+}
+
+/* ---------- Kirish ekranlari ---------- */
+
+function IntroBackground({ on }) {
+  return (
+    <>
+      <div className={`pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-[#ff4057]/25 blur-[110px] transition-all duration-1000 ${on ? "translate-x-0 translate-y-0 opacity-100" : "-translate-x-10 -translate-y-10 opacity-0"}`} />
+      <div className={`pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-[#3987ff]/25 blur-[110px] transition-all duration-1000 ${on ? "translate-x-0 translate-y-0 opacity-100" : "translate-x-10 translate-y-10 opacity-0"}`} />
+      <div className={`pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#27d99a]/10 blur-[120px] transition-opacity duration-1000 ${on ? "opacity-100" : "opacity-0"}`} />
+    </>
+  );
+}
+
+function Welcome({ onStart }) {
+  const { on, exit, go } = useScreen();
+
+  return (
+    <div
+      className={`fixed inset-0 z-[5000] flex items-center justify-center overflow-hidden bg-[#0b0f1a] px-5 text-white ${screenAnim(on, exit)}`}
+    >
+      <IntroBackground on={on} />
+
+      <div className="relative z-10 flex w-full max-w-md flex-col items-center text-center">
+        <img src={metro_logo}
+          alt="Metro-Go"
+          style={itemStyle(on, 0)}
+          className={`${itemCls(on)} h-28 w-auto rounded-full object-contain drop-shadow-[0_0_30px_rgba(255,255,255,.15)] sm:h-33`} />
+
+        <h2 style={itemStyle(on, 2)} className={`${itemCls(on)} mt-3 text-lg leading-6 text-slate-300 sm:text-lg`}>
+          Toshkent metrosi poyezdlarini real vaqtda kuzating, bekatlar va jadvallarni bir joyda ko‘ring.
+        </h2>
+
+        <div style={itemStyle(on, 3)} className={`${itemCls(on)} mt-6 flex items-center gap-2`}>
+          {lines.map((l) => (
+            <span
+              key={l.id}
+              className="h-2.5 w-10 rounded-full"
+              style={{ backgroundColor: l.color, boxShadow: `0 0 14px ${l.color}` }}
+            />
+          ))}
+        </div>
+
+        <div style={itemStyle(on, 4)} className={`${itemCls(on)} mt-10 flex w-full justify-center`}>
+          <button onClick={() => go("next", onStart)}
+            className="group flex w-full max-w-xs cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-primary to-secondary px-8 py-4 text-lg font-bold text-primary-content shadow-[0_0_40px_color-mix(in_oklab,var(--color-primary)_40%,transparent)] transition hover:scale-[1.03] active:scale-95">
+            <FaPlay size={18} className="transition group-hover:translate-x-0.5" />
+            Boshlash
+          </button>
+        </div>
+
+        <p style={itemStyle(on, 5)} className={`${itemCls(on)} mt-10 text-slate-300`}>© 2026 Tashkent Metro</p>
+      </div>
+    </div>
+  );
+}
+
+const FEATURES = [
+  {
+    icon: FaTrain,
+    color: "#ff4057",
+    title: "Jonli poyezdlar",
+    text: "Poyezdlar xaritada real vaqtda harakatlanadi, bosib kuzatib borishingiz mumkin.",
+  },
+  {
+    icon: FaRegClock,
+    color: "#f6c945",
+    title: "Aniq jadval",
+    text: "Har bir bekat uchun keyingi poyezdlar kelish vaqti va ish tartibi ko‘rsatiladi.",
+  },
+  {
+    icon: FaMapMarkedAlt,
+    color: "#27d99a",
+    title: "To‘liq xarita",
+    text: "4 ta liniya va barcha bekatlar bitta xaritada, qidiruv va filtr bilan.",
+  },
+];
+
+function Features({ onContinue, onBack }) {
+  const { on, exit, go } = useScreen();
+
+  return (
+    <div className={`fixed inset-0 z-[5000] flex items-center justify-center bg-[#0b0f1a] px-5 py-8 text-white ${screenAnim(on, exit)}`}>
+      <IntroBackground on={on} />
+
+      <div className="relative z-10 flex w-full max-w-md flex-col items-center text-center">
+        <p style={itemStyle(on, 0)} className={`${itemCls(on)} text-[11px] font-black uppercase tracking-[.25em] text-emerald-300`}>
+          Imkoniyatlar
+        </p>
+        <h2 style={itemStyle(on, 1)} className={`${itemCls(on)} mt-3 text-2xl font-black tracking-tight sm:text-3xl`}>
+          Metro-Go bilan nimalar qila olasiz?
+        </h2>
+
+        <div className="mt-8 w-full space-y-3 text-left">
+          {FEATURES.map(({ icon: Icon, color, title, text }, i) => (
+            <div key={title} style={itemStyle(on, 2 + i)} className={itemCls(on)}>
+              <div className="feature-card group flex cursor-pointer items-start gap-4 rounded-2xl border border-white/10 bg-white/[.045] p-4 backdrop-blur transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.03] hover:border-white/25 hover:bg-white/[.09] hover:shadow-[0_12px_40px_rgba(0,0,0,.45)] active:scale-[.98]">
+                <span
+                  className="feature-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+                  style={{
+                    backgroundColor: `${color}26`,
+                    color,
+                    boxShadow: `0 0 18px ${color}40`,
+                    animationDelay: `${i * 0.4}s`,
+                  }}
+                >
+                  <Icon size={20} />
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold transition-colors duration-300 group-hover:text-white">
+                    {title}
+                  </h3>
+                  <p className="mt-1 text-sm leading-5 text-slate-300">{text}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={itemStyle(on, 5)} className={`${itemCls(on)} mt-8 flex w-full items-center gap-3`}>
+          <button
+            onClick={() => go("back", onBack, 400)}
+            aria-label="Orqaga"
+            className="flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center rounded-2xl border border-white/15 bg-white/5 text-slate-200 transition hover:bg-white/10 active:scale-95"
+          >
+            <FaArrowLeft size={16} />
+          </button>
+
+          <button
+            onClick={() => go("next", onContinue)}
+            className="group flex h-14 flex-1 cursor-pointer items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-400 to-green-500 px-6 text-base font-black text-slate-950 shadow-[0_0_40px_rgba(52,211,153,.35)] transition hover:scale-[1.02] hover:shadow-[0_0_55px_rgba(52,211,153,.55)] active:scale-95 sm:text-lg"
+          >
+            <FaLocationArrow size={16} />
+            Xaritani ochish
+            <FaArrowRight size={16} className="transition group-hover:translate-x-1" />
+          </button>
+        </div>
+
+        <div style={itemStyle(on, 6)} className={`${itemCls(on)} mt-6 flex items-center gap-2`}>
+          <span className="h-1.5 w-1.5 rounded-full bg-white/30" />
+          <span className="h-1.5 w-6 rounded-full bg-emerald-400" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  const [step, setStep] = useState("welcome");
+
+  if (step === "welcome") return <Welcome onStart={() => setStep("features")} />;
+  if (step === "features")
+    return <Features onContinue={() => setStep("app")} onBack={() => setStep("welcome")} />;
+  return <MetroApp onExit={() => setStep("features")} />;
 }
