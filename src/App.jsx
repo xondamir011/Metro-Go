@@ -1079,7 +1079,7 @@ function Welcome({ onStart }) {
           style={itemStyle(on, 0)}
           className={`${itemCls(on)} h-28 w-auto rounded-full object-contain drop-shadow-[0_0_30px_rgba(255,255,255,.15)] sm:h-33`} />
 
-        <h2 style={itemStyle(on, 2)} className={`${itemCls(on)} mt-3 text-sm text-slate-300 leading-6 font-black uppercase sm:text-lg`}>
+        <h2 style={itemStyle(on, 2)} className={`${itemCls(on)} mt-3 text-lg text-slate-300 leading-6 font-black uppercase sm:text-lg`}>
           Toshkent metrosi poyezdlarini real vaqtda kuzating, bekatlar va jadvallarni bir joyda ko‘ring.
         </h2>
 
