@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { Search, MapPin, Clock3, RefreshCw, X, CircleCheck, CircleX, Crosshair } from "lucide-react";
 import { FaPlay, FaArrowRight, FaArrowLeft, FaTrain, FaRegClock, FaMapMarkedAlt, FaLocationArrow, FaSignOutAlt } from "react-icons/fa";
 import metro_logo from "./assets/metro_logo.png";
+
 const DWELL = 25;
 const TERM_DWELL = 20;
 const DAY = 86400;
@@ -615,13 +616,9 @@ function TrainPanel({ train, currentSec, follow, onFollow, onClose }) {
   );
 }
 
-/* ---------- Animatsiya yordamchilari ---------- */
-
-// Ekran ochilganda "shown" true bo'ladi (kirish animatsiyasi),
-// go() chaqirilganda "exit" o'rnatiladi (chiqish animatsiyasi) va delay'dan keyin callback ishlaydi.
 function useScreen() {
   const [shown, setShown] = useState(false);
-  const [exit, setExit] = useState(null); // null | "next" | "back"
+  const [exit, setExit] = useState(null); 
 
   useEffect(() => {
     const id = setTimeout(() => setShown(true), 40);
